@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Inventory Forecasting Dashboard – Felix Opitz</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+    background: #F0F4F8;
+    color: #1E293B;
+    min-height: 100vh;
+  }
+
+  /* ── Top bar ── */
+  .topbar {
+    background: #1C7293;
+    padding: 0 2rem;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .topbar h1 { font-size: 17px; font-weight: 600; color: #fff; letter-spacing: 0.01em; }
+  .topbar .meta { font-size: 12px; color: #B5D4F4; }
+
+  /* ── Layout ── */
+  .dashboard { max-width: 1200px; margin: 0 auto; padding: 1.5rem; }
+
+  /* ── KPI Cards ── */
+  .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 1.5rem; }
+
+  .kpi {
+    background: #fff;
+    border-radius: 12px;
+    padding: 1.1rem 1.25rem;
+    border: 1px solid #E2E8F0;
+    position: relative;
+    cursor: default;
+    transition: box-shadow 0.2s, transform 0.2s;
+  }
+  .kpi:hover { box-shadow: 0 6px 24px rgba(28,114,147,0.13); transform: translateY(-2px); }
+  .kpi .kpi-label { font-size: 12px; color: #64748B; margin-bottom: 6px; }
+  .kpi .kpi-value { font-size: 26px; font-weight: 700; color: #1C7293; line-height: 1.1; }
+  .kpi .kpi-delta { font-size: 12px; margin-top: 5px; }
+  .kpi .kpi-delta.pos { color: #3B6D11; }
+  .kpi .kpi-delta.neg { color: #A32D2D; }
+  .kpi .kpi-delta.warn { color: #854F0B; }
+
+  /* Tooltip */
+  .kpi .tooltip {
+    display: none;
+    position: absolute;
+    bottom: calc(100% + 10px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: #1E293B;
+    color: #fff;
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 12px;
+    width: 210px;
+    line-height: 1.6;
+    z-index: 10;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+    pointer-events: none;
+  }
+  .kpi .tooltip::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-top-color: #1E293B;
+  }
+  .kpi:hover .tooltip { display: block; }
+  .tooltip-row { display: flex; justify-content: space-between; gap: 12px; }
+  .tooltip-row span:last-child { font-weight: 600; color: #7DD3FC; }
+  .tooltip-divider { border: none; border-top: 1px solid rgba(255,255,255,0.15); margin: 6px 0; }
+
+  /* ── Charts row ── */
+  .charts { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 1.5rem; }
+
+  .card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 1.25rem;
+    border: 1px solid #E2E8F0;
+  }
+  .card-title { font-size: 14px; font-weight: 600; color: #1E293B; margin-bottom: 1rem; }
+
+  .legend { display: flex; gap: 16px; margin-bottom: 10px; flex-wrap: wrap; }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #64748B; }
+  .legend-dot { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+
+  .chart-wrap { position: relative; height: 220px; }
+
+  /* ── Savings Table ── */
+  .savings-card {
+    background: #fff;
+    border-radius: 12px;
+    padding: 1.25rem;
+    border: 1px solid #E2E8F0;
+  }
+  .savings-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+  }
+  .savings-badge {
+    background: #E1F5EE;
+    color: #0F6E56;
+    font-size: 13px;
+    font-weight: 600;
+    padding: 4px 12px;
+    border-radius: 20px;
+  }
+  .savings-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 12px;
+  }
+  .product {
+    border: 1px solid #E2E8F0;
+    border-radius: 10px;
+    padding: 12px;
+    transition: box-shadow 0.2s, transform 0.2s;
+    cursor: default;
+    position: relative;
+  }
+  .product:hover { box-shadow: 0 4px 16px rgba(28,114,147,0.12); transform: translateY(-2px); }
+  .product-name { font-size: 12px; font-weight: 600; color: #1E293B; margin-bottom: 2px; }
+  .product-sku { font-size: 10px; color: #94A3B8; margin-bottom: 8px; }
+  .bar-bg { background: #F1F5F9; border-radius: 4px; height: 6px; margin-bottom: 6px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 4px; transition: width 0.6s ease; }
+  .product-units { font-size: 10px; color: #64748B; }
+  .product-saving { font-size: 14px; font-weight: 700; color: #0F6E56; margin-top: 4px; }
+
+  .pill {
+    display: inline-block;
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 20px;
+    margin-top: 5px;
+    font-weight: 500;
+  }
+  .pill-critical { background: #FCEBEB; color: #A32D2D; }
+  .pill-overstock { background: #FAEEDA; color: #854F0B; }
+  .pill-moderate { background: #EAF3DE; color: #3B6D11; }
+  .pill-low      { background: #E1F5EE; color: #0F6E56; }
+
+  /* Product tooltip */
+  .product .tooltip {
+    display: none;
+    position: absolute;
+    bottom: calc(100% + 10px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: #1E293B;
+    color: #fff;
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 12px;
+    width: 190px;
+    line-height: 1.7;
+    z-index: 10;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+    pointer-events: none;
+  }
+  .product .tooltip::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-top-color: #1E293B;
+  }
+  .product:hover .tooltip { display: block; }
+
+  /* ── Footer ── */
+  .footer {
+    text-align: center;
+    font-size: 12px;
+    color: #94A3B8;
+    padding: 1.5rem 0 2rem;
+  }
+  .footer a { color: #1C7293; text-decoration: none; }
+  .footer a:hover { text-decoration: underline; }
+
+  /* ── Responsive ── */
+  @media (max-width: 900px) {
+    .kpis { grid-template-columns: repeat(2, 1fr); }
+    .charts { grid-template-columns: 1fr; }
+    .savings-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (max-width: 500px) {
+    .kpis { grid-template-columns: 1fr 1fr; }
+    .savings-grid { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1>📦 Inventory Forecasting Dashboard</h1>
+  <span class="meta">Felix Opitz &nbsp;·&nbsp; E-Commerce Forecasting Tool &nbsp;·&nbsp; Jun 2026</span>
+</div>
+
+<div class="dashboard">
+
+  <!-- KPI Cards -->
+  <div class="kpis">
+
+    <div class="kpi">
+      <div class="kpi-label">SKUs tracked</div>
+      <div class="kpi-value">248</div>
+      <div class="kpi-delta pos">▲ +12 new this month</div>
+      <div class="tooltip">
+        <div class="tooltip-row"><span>Total active SKUs</span><span>248</span></div>
+        <hr class="tooltip-divider">
+        <div class="tooltip-row"><span>Added this month</span><span>+12</span></div>
+        <div class="tooltip-row"><span>Discontinued</span><span>3</span></div>
+        <div class="tooltip-row"><span>Categories</span><span>5</span></div>
+      </div>
+    </div>
+
+    <div class="kpi">
+      <div class="kpi-label">Stockout risk (next 30d)</div>
+      <div class="kpi-value">14</div>
+      <div class="kpi-delta neg">⚠ 6 critical</div>
+      <div class="tooltip">
+        <div class="tooltip-row"><span>SKUs at risk</span><span>14</span></div>
+        <hr class="tooltip-divider">
+        <div class="tooltip-row"><span>Critical (&lt;7 days)</span><span>6</span></div>
+        <div class="tooltip-row"><span>Warning (7–14d)</span><span>5</span></div>
+        <div class="tooltip-row"><span>Watch (14–30d)</span><span>3</span></div>
+      </div>
+    </div>
+
+    <div class="kpi">
+      <div class="kpi-label">Overstock value</div>
+      <div class="kpi-value">€42,800</div>
+      <div class="kpi-delta neg">▲ +8% vs last month</div>
+      <div class="tooltip">
+        <div class="tooltip-row"><span>Total tied-up capital</span><span>€42,800</span></div>
+        <hr class="tooltip-divider">
+        <div class="tooltip-row"><span>Electronics</span><span>€18,400</span></div>
+        <div class="tooltip-row"><span>Accessories</span><span>€12,600</span></div>
+        <div class="tooltip-row"><span>Mobile</span><span>€7,200</span></div>
+        <div class="tooltip-row"><span>Other</span><span>€4,600</span></div>
+      </div>
+    </div>
+
+    <div class="kpi">
+      <div class="kpi-label">Projected savings</div>
+      <div class="kpi-value">€18,340</div>
+      <div class="kpi-delta pos">▲ with reorder optimisation</div>
+      <div class="tooltip">
+        <div class="tooltip-row"><span>Total potential saving</span><span>€18,340</span></div>
+        <hr class="tooltip-divider">
+        <div class="tooltip-row"><span>Reorder optimisation</span><span>€9,800</span></div>
+        <div class="tooltip-row"><span>Overstock reduction</span><span>€5,240</span></div>
+        <div class="tooltip-row"><span>Markdown prevention</span><span>€3,300</span></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Charts -->
+  <div class="charts">
+
+    <div class="card">
+      <div class="card-title">Demand forecast vs actual (units)</div>
+      <div class="legend">
+        <div class="legend-item"><span class="legend-dot" style="background:#1C7293"></span>Forecast</div>
+        <div class="legend-item"><span class="legend-dot" style="background:#639922"></span>Actual</div>
+        <div class="legend-item"><span class="legend-dot" style="background:#EF9F27;opacity:.7"></span>Projected</div>
+      </div>
+      <div class="chart-wrap">
+        <canvas id="forecastChart" role="img" aria-label="Line chart showing demand forecast vs actual units over 10 months"></canvas>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Stock level by category</div>
+      <div class="legend">
+        <div class="legend-item"><span class="legend-dot" style="background:#1C7293"></span>Current stock</div>
+        <div class="legend-item"><span class="legend-dot" style="background:#E24B4A"></span>Reorder point</div>
+      </div>
+      <div class="chart-wrap">
+        <canvas id="stockChart" role="img" aria-label="Bar chart of stock levels vs reorder points per category"></canvas>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Savings -->
+  <div class="savings-card">
+    <div class="savings-header">
+      <div class="card-title" style="margin-bottom:0">Savings potential by product</div>
+      <span class="savings-badge">€18,340 total potential</span>
+    </div>
+    <div class="savings-grid">
+
+      <div class="product">
+        <div class="product-name">Laptop stand A3</div>
+        <div class="product-sku">SKU-0041</div>
+        <div class="bar-bg"><div class="bar-fill" style="width:88%;background:#E24B4A"></div></div>
+        <div class="product-units">880 units overstocked</div>
+        <div class="product-saving">€5,280</div>
+        <span class="pill pill-critical">Critical</span>
+        <div class="tooltip">
+          <div class="tooltip-row"><span>Overstock units</span><span>880</span></div>
+          <div class="tooltip-row"><span>Unit value</span><span>€6.00</span></div>
+          <div class="tooltip-row"><span>Days of supply</span><span>62d</span></div>
+          <hr class="tooltip-divider">
+          <div class="tooltip-row"><span>Recommended order</span><span>0 units</span></div>
+          <div class="tooltip-row"><span>Saving if actioned</span><span>€5,280</span></div>
+        </div>
+      </div>
+
+      <div class="product">
+        <div class="product-name">USB-C Hub Pro</div>
+        <div class="product-sku">SKU-0087</div>
+        <div class="bar-bg"><div class="bar-fill" style="width:72%;background:#EF9F27"></div></div>
+        <div class="product-units">540 units overstocked</div>
+        <div class="product-saving">€4,050</div>
+        <span class="pill pill-overstock">Overstock</span>
+        <div class="tooltip">
+          <div class="tooltip-row"><span>Overstock units</span><span>540</span></div>
+          <div class="tooltip-row"><span>Unit value</span><span>€7.50</span></div>
+          <div class="tooltip-row"><span>Days of supply</span><span>48d</span></div>
+          <hr class="tooltip-divider">
+          <div class="tooltip-row"><span>Recommended order</span><span>0 units</span></div>
+          <div class="tooltip-row"><span>Saving if actioned</span><span>€4,050</span></div>
+        </div>
+      </div>
+
+      <div class="product">
+        <div class="product-name">Keyboard wireless</div>
+        <div class="product-sku">SKU-0112</div>
+        <div class="bar-bg"><div class="bar-fill" style="width:60%;background:#EF9F27"></div></div>
+        <div class="product-units">420 units overstocked</div>
+        <div class="product-saving">€3,780</div>
+        <span class="pill pill-overstock">Overstock</span>
+        <div class="tooltip">
+          <div class="tooltip-row"><span>Overstock units</span><span>420</span></div>
+          <div class="tooltip-row"><span>Unit value</span><span>€9.00</span></div>
+          <div class="tooltip-row"><span>Days of supply</span><span>38d</span></div>
+          <hr class="tooltip-divider">
+          <div class="tooltip-row"><span>Recommended order</span><span>80 units</span></div>
+          <div class="tooltip-row"><span>Saving if actioned</span><span>€3,780</span></div>
+        </div>
+      </div>
+
+      <div class="product">
+        <div class="product-name">Phone case XR</div>
+        <div class="product-sku">SKU-0199</div>
+        <div class="bar-bg"><div class="bar-fill" style="width:44%;background:#639922"></div></div>
+        <div class="product-units">210 units overstocked</div>
+        <div class="product-saving">€2,940</div>
+        <span class="pill pill-moderate">Moderate</span>
+        <div class="tooltip">
+          <div class="tooltip-row"><span>Overstock units</span><span>210</span></div>
+          <div class="tooltip-row"><span>Unit value</span><span>€14.00</span></div>
+          <div class="tooltip-row"><span>Days of supply</span><span>26d</span></div>
+          <hr class="tooltip-divider">
+          <div class="tooltip-row"><span>Recommended order</span><span>120 units</span></div>
+          <div class="tooltip-row"><span>Saving if actioned</span><span>€2,940</span></div>
+        </div>
+      </div>
+
+      <div class="product">
+        <div class="product-name">Webcam HD 1080</div>
+        <div class="product-sku">SKU-0231</div>
+        <div class="bar-bg"><div class="bar-fill" style="width:28%;background:#1C7293"></div></div>
+        <div class="product-units">140 units overstocked</div>
+        <div class="product-saving">€2,290</div>
+        <span class="pill pill-low">Low risk</span>
+        <div class="tooltip">
+          <div class="tooltip-row"><span>Overstock units</span><span>140</span></div>
+          <div class="tooltip-row"><span>Unit value</span><span>€16.35</span></div>
+          <div class="tooltip-row"><span>Days of supply</span><span>18d</span></div>
+          <hr class="tooltip-divider">
+          <div class="tooltip-row"><span>Recommended order</span><span>200 units</span></div>
+          <div class="tooltip-row"><span>Saving if actioned</span><span>€2,290</span></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="footer">
+    Built with Python &amp; Power BI &nbsp;·&nbsp; Lager-Forecasting-Tool &nbsp;·&nbsp;
+    <a href="https://github.com/felixopitz" target="_blank">github.com/felixopitz</a>
+    &nbsp;·&nbsp; Felix Opitz
+  </div>
+
+</div>
+
+<script>
+  const months = ['Nov','Dec','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug'];
+
+  new Chart(document.getElementById('forecastChart'), {
+    type: 'line',
+    data: {
+      labels: months,
+      datasets: [
+        {
+          label: 'Forecast',
+          data: [820,950,1100,980,870,910,960,1040,1120,1180],
+          borderColor: '#1C7293',
+          backgroundColor: 'rgba(28,114,147,0.07)',
+          borderWidth: 2.5,
+          pointRadius: 4,
+          pointHoverRadius: 6,
+          tension: 0.4,
+          fill: true
+        },
+        {
+          label: 'Actual',
+          data: [790,980,1060,1010,840,890,930,1020,null,null],
+          borderColor: '#639922',
+          backgroundColor: 'transparent',
+          borderWidth: 2.5,
+          pointRadius: 4,
+          pointHoverRadius: 6,
+          tension: 0.4
+        },
+        {
+          label: 'Projected',
+          data: [null,null,null,null,null,null,null,1020,1120,1180],
+          borderColor: '#EF9F27',
+          backgroundColor: 'rgba(239,159,39,0.07)',
+          borderWidth: 2,
+          pointRadius: 4,
+          pointHoverRadius: 6,
+          tension: 0.4,
+          borderDash: [6,4],
+          fill: true
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#1E293B',
+          titleColor: '#94A3B8',
+          bodyColor: '#fff',
+          padding: 10,
+          callbacks: {
+            label: ctx => ` ${ctx.dataset.label}: ${ctx.parsed.y ?? '–'} units`
+          }
+        }
+      },
+      scales: {
+        x: { grid: { display: false }, ticks: { color: '#94A3B8', font: { size: 11 } } },
+        y: { grid: { color: 'rgba(0,0,0,0.05)' }, ticks: { color: '#94A3B8', font: { size: 11 } } }
+      }
+    }
+  });
+
+  new Chart(document.getElementById('stockChart'), {
+    type: 'bar',
+    data: {
+      labels: ['Electronics','Accessories','Mobile','Peripherals','Storage'],
+      datasets: [
+        {
+          label: 'Current stock',
+          data: [3200,2800,1900,2400,1600],
+          backgroundColor: '#1C7293',
+          borderRadius: 4,
+          hoverBackgroundColor: '#065A82'
+        },
+        {
+          label: 'Reorder point',
+          data: [1200,900,1400,800,1100],
+          backgroundColor: '#E24B4A',
+          borderRadius: 4,
+          hoverBackgroundColor: '#A32D2D'
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#1E293B',
+          titleColor: '#94A3B8',
+          bodyColor: '#fff',
+          padding: 10
+        }
+      },
+      scales: {
+        x: { grid: { display: false }, ticks: { color: '#94A3B8', font: { size: 11 } } },
+        y: { grid: { color: 'rgba(0,0,0,0.05)' }, ticks: { color: '#94A3B8', font: { size: 11 } } }
+      }
+    }
+  });
+</script>
+</body>
+</html>
