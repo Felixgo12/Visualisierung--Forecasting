@@ -1,0 +1,51 @@
+date,sku,product_name,category,units_sold,stock_level,unit_price
+2025-09-01,SKU-0041,Laptop stand A3,Electronics,42,1200,6.00
+2025-09-01,SKU-0087,USB-C Hub Pro,Accessories,38,980,7.50
+2025-09-01,SKU-0112,Keyboard wireless,Peripherals,31,850,9.00
+2025-09-01,SKU-0199,Phone case XR,Mobile,55,620,14.00
+2025-09-01,SKU-0231,Webcam HD 1080,Electronics,29,540,16.35
+2025-10-01,SKU-0041,Laptop stand A3,Electronics,48,1180,6.00
+2025-10-01,SKU-0087,USB-C Hub Pro,Accessories,41,960,7.50
+2025-10-01,SKU-0112,Keyboard wireless,Peripherals,35,820,9.00
+2025-10-01,SKU-0199,Phone case XR,Mobile,61,580,14.00
+2025-10-01,SKU-0231,Webcam HD 1080,Electronics,33,510,16.35
+2025-11-01,SKU-0041,Laptop stand A3,Electronics,55,1150,6.00
+2025-11-01,SKU-0087,USB-C Hub Pro,Accessories,46,940,7.50
+2025-11-01,SKU-0112,Keyboard wireless,Peripherals,39,800,9.00
+2025-11-01,SKU-0199,Phone case XR,Mobile,68,550,14.00
+2025-11-01,SKU-0231,Webcam HD 1080,Electronics,38,490,16.35
+2025-12-01,SKU-0041,Laptop stand A3,Electronics,72,1100,6.00
+2025-12-01,SKU-0087,USB-C Hub Pro,Accessories,58,920,7.50
+2025-12-01,SKU-0112,Keyboard wireless,Peripherals,51,780,9.00
+2025-12-01,SKU-0199,Phone case XR,Mobile,84,510,14.00
+2025-12-01,SKU-0231,Webcam HD 1080,Electronics,49,470,16.35
+2026-01-01,SKU-0041,Laptop stand A3,Electronics,61,1060,6.00
+2026-01-01,SKU-0087,USB-C Hub Pro,Accessories,52,900,7.50
+2026-01-01,SKU-0112,Keyboard wireless,Peripherals,44,760,9.00
+2026-01-01,SKU-0199,Phone case XR,Mobile,71,480,14.00
+2026-01-01,SKU-0231,Webcam HD 1080,Electronics,42,450,16.35
+2026-02-01,SKU-0041,Laptop stand A3,Electronics,58,1020,6.00
+2026-02-01,SKU-0087,USB-C Hub Pro,Accessories,49,880,7.50
+2026-02-01,SKU-0112,Keyboard wireless,Peripherals,41,740,9.00
+2026-02-01,SKU-0199,Phone case XR,Mobile,67,460,14.00
+2026-02-01,SKU-0231,Webcam HD 1080,Electronics,39,430,16.35
+2026-03-01,SKU-0041,Laptop stand A3,Electronics,44,980,6.00
+2026-03-01,SKU-0087,USB-C Hub Pro,Accessories,40,860,7.50
+2026-03-01,SKU-0112,Keyboard wireless,Peripherals,35,720,9.00
+2026-03-01,SKU-0199,Phone case XR,Mobile,58,440,14.00
+2026-03-01,SKU-0231,Webcam HD 1080,Electronics,33,410,16.35
+2026-04-01,SKU-0041,Laptop stand A3,Electronics,46,950,6.00
+2026-04-01,SKU-0087,USB-C Hub Pro,Accessories,43,840,7.50
+2026-04-01,SKU-0112,Keyboard wireless,Peripherals,37,700,9.00
+2026-04-01,SKU-0199,Phone case XR,Mobile,62,420,14.00
+2026-04-01,SKU-0231,Webcam HD 1080,Electronics,35,390,16.35
+2026-05-01,SKU-0041,Laptop stand A3,Electronics,50,920,6.00
+2026-05-01,SKU-0087,USB-C Hub Pro,Accessories,46,820,7.50
+2026-05-01,SKU-0112,Keyboard wireless,Peripherals,39,680,9.00
+2026-05-01,SKU-0199,Phone case XR,Mobile,65,400,14.00
+2026-05-01,SKU-0231,Webcam HD 1080,Electronics,37,370,16.35
+2026-06-01,SKU-0041,Laptop stand A3,Electronics,53,900,6.00
+2026-06-01,SKU-0087,USB-C Hub Pro,Accessories,48,800,7.50
+2026-06-01,SKU-0112,Keyboard wireless,Peripherals,41,660,9.00
+2026-06-01,SKU-0199,Phone case XR,Mobile,68,380,14.00
+2026-06-01,SKU-0231,Webcam HD 1080,Electronics,39,350,16.35
